@@ -250,13 +250,88 @@
             font-style: italic;
             border-left: 3px solid #667eea;
         }
+
+        /* Orchestrator Insights Styles - Modular for easy moving */
+        .orchestrator-insights {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .insights-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .insight-item {
+            background: white;
+            padding: 6px;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+
+        .insight-label {
+            font-weight: bold;
+            color: #333;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .insight-value {
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .trajectory-item {
+            grid-column: 1 / -1;
+        }
+
+        .suggestion-item {
+            grid-column: 1 / -1;
+        }
+
+        .state-transition {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .triggers-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .trigger-tag {
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
             <h1>🤖 Emotional Chatbot</h1>
-            <div class="status">Phase 2 - Sentiment Analysis | Normal Agent + Sentiment Detection</div>
+            <div class="status">Phase 3 - Happy Agent Routing | Enhanced Orchestrator Insights</div>
         </div>
         
         <div class="conversation-info">
@@ -266,8 +341,8 @@
         <div class="chat-messages" id="chatMessages">
             <div class="message assistant">
                 <div class="message-content">
-                    👋 Hello! I'm your emotional chatbot. I'm now in Phase 2 with sentiment analysis! I can detect your emotions and show my reasoning. How can I help you today?
-                    <div class="message-info">Agent: Normal | Sentiment Analysis Active</div>
+                    👋 Hello! I'm your emotional chatbot. I'm now in Phase 3 with happy agent routing! I can detect your emotions and route to the perfect agent (pleased, cheerful, or ecstatic) with detailed insights. How can I help you today?
+                    <div class="message-info">Agent: Normal | Happy Agent Routing + Enhanced Insights Active</div>
                 </div>
             </div>
         </div>
@@ -353,7 +428,7 @@
 
                 // Hide typing and show user message with sentiment analysis
                 showTyping(false);
-                addMessage('user', message, null, null, data.sentiment_analysis, data.orchestrator_decision);
+                addMessage('user', message, null, null, data.sentiment_analysis, data.orchestrator_decision, data.orchestrator_insights);
                 addMessage('assistant', data.response, data.agent_type, data.timestamp);
 
             } catch (error) {
@@ -365,7 +440,7 @@
             }
         }
 
-        function addMessage(role, content, agentType = null, timestamp = null, sentimentAnalysis = null, orchestratorDecision = null) {
+        function addMessage(role, content, agentType = null, timestamp = null, sentimentAnalysis = null, orchestratorDecision = null, orchestratorInsights = null) {
             messageCount++;
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${role}`;
@@ -389,6 +464,12 @@
                 if (sentimentAnalysis) {
                     const sentimentDiv = createSentimentDisplay(sentimentAnalysis, orchestratorDecision);
                     contentDiv.appendChild(sentimentDiv);
+                }
+                
+                // Add orchestrator insights for user messages
+                if (orchestratorInsights) {
+                    const insightsDiv = createOrchestratorInsights(orchestratorInsights);
+                    contentDiv.appendChild(insightsDiv);
                 }
             }
 
@@ -415,6 +496,55 @@
             `;
             
             return sentimentDiv;
+        }
+
+        // Modular function for orchestrator insights - easy to move/modify
+        function createOrchestratorInsights(insights) {
+            const insightsDiv = document.createElement('div');
+            insightsDiv.className = 'orchestrator-insights';
+            
+            // Create triggers display
+            const triggersHtml = insights.detected_triggers && insights.detected_triggers.length > 0 
+                ? `<div class="triggers-list">${insights.detected_triggers.map(trigger => `<span class="trigger-tag">${trigger}</span>`).join('')}</div>`
+                : '<span class="insight-value">No specific triggers detected</span>';
+            
+            insightsDiv.innerHTML = `
+                <div class="insights-header">
+                    🎯 Orchestrator Insights
+                </div>
+                <div class="insights-grid">
+                    <div class="insight-item">
+                        <div class="insight-label">Current State</div>
+                        <div class="insight-value state-transition">${insights.current_state || 'Unknown'}</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-label">Emotional Intensity</div>
+                        <div class="insight-value">${insights.emotional_intensity || 'Unknown'}</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-label">State Transition</div>
+                        <div class="insight-value">${insights.state_transition || 'No transition'}</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-label">Detected Triggers</div>
+                        ${triggersHtml}
+                    </div>
+                    <div class="insight-item trajectory-item">
+                        <div class="insight-label">Conversation Trajectory</div>
+                        <div class="insight-value">${insights.conversation_trajectory || 'Initial state'}</div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-label">Trigger Explanation</div>
+                        <div class="insight-value">${insights.trigger_explanation || 'No explanation available'}</div>
+                    </div>
+                    <div class="insight-item suggestion-item">
+                        <div class="insight-label">Orchestrator Suggestion</div>
+                        <div class="insight-value">${insights.orchestrator_suggestion || 'No suggestion available'}</div>
+                    </div>
+                </div>
+            `;
+            
+            return insightsDiv;
         }
 
         function addErrorMessage(message) {

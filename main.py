@@ -45,6 +45,7 @@ class ChatResponse(BaseModel):
     timestamp: datetime
     sentiment_analysis: Optional[Dict[str, Any]] = None
     orchestrator_decision: Optional[Dict[str, Any]] = None
+    orchestrator_insights: Optional[Dict[str, Any]] = None
 
 # Initialize orchestrator
 orchestrator = Orchestrator()
@@ -103,7 +104,8 @@ async def chat(request: ChatRequest):
             agent_type=agent_type,
             timestamp=datetime.now(),
             sentiment_analysis=analysis_data.get("sentiment_analysis"),
-            orchestrator_decision=analysis_data.get("orchestrator_decision")
+            orchestrator_decision=analysis_data.get("orchestrator_decision"),
+            orchestrator_insights=analysis_data.get("orchestrator_insights")
         )
         
     except Exception as e:
