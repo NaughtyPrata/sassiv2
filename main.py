@@ -1,18 +1,18 @@
+# Load environment variables first
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
-from dotenv import load_dotenv
 import uuid
 from datetime import datetime
 
 # Import refactored components
 from orchestrator.orchestrator import Orchestrator
 from agents.base_agent import ChatMessage as AgentChatMessage
-
-# Load environment variables
-load_dotenv()
 
 app = FastAPI(title="Emotional Chatbot API", version="2.0.0")
 
