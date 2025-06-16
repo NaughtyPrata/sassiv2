@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List
-from openai import OpenAI
+from groq import Groq
 from fastapi import HTTPException
 import os
 from utils.prompt_loader import load_prompt
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize Groq client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 class ChatMessage:
     """Chat message model for agents"""
@@ -27,21 +27,22 @@ class BaseAgent(ABC):
         """Generate response based on conversation history"""
         pass
     
-    async def _call_openai(self, messages: List[ChatMessage], max_tokens: int = 500, temperature: float = 0.7) -> str:
-        """Common OpenAI API call logic"""
+    async def _call_groq(self, messages: List[ChatMessage], max_tokens: int = 1024, temperature: float = 0.7) -> str:
+        """Common Groq API call logic"""
         try:
-            # Convert messages to OpenAI format
-            openai_messages = [{"role": "system", "content": self.system_prompt}]
+            # Convert messages to Groq format
+            groq_messages = [{"role": "system", "content": self.system_prompt}]
             for msg in messages:
-                openai_messages.append({"role": msg.role, "content": msg.content})
+                groq_messages.append({"role": msg.role, "content": msg.content})
             
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=openai_messages,
+            completion = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=groq_messages,
                 max_tokens=max_tokens,
-                temperature=temperature
+                temperature=temperature,
+                stream=False  # For now, let's use non-streaming for simplicity
             )
             
-            return response.choices[0].message.content
+            return completion.choices[0].message.content
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating response: {str(e)}") 

@@ -13,8 +13,8 @@ class SentimentAgent(BaseAgent):
         # Create a simple message list for analysis
         analysis_messages = [ChatMessage("user", message)]
         
-        # Get raw response from OpenAI
-        raw_response = await self._call_openai(analysis_messages, max_tokens=300, temperature=0.3)
+        # Get raw response from Groq
+        raw_response = await self._call_groq(analysis_messages, max_tokens=300, temperature=0.3)
         
         try:
             # Clean the response - remove markdown code blocks if present

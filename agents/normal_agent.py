@@ -9,4 +9,4 @@ class NormalAgent(BaseAgent):
     
     async def generate_response(self, messages: List[ChatMessage]) -> str:
         """Generate balanced, professional response"""
-        return await self._call_openai(messages) 
+        return await self._call_groq(messages) 

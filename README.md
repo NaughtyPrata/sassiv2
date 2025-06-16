@@ -6,6 +6,7 @@ A Python FastAPI backend for an emotional chatbot system with orchestrator-manag
 
 ✅ **Implemented:**
 - ✅ **Refactored Architecture**: Modular structure with separate agent classes
+- ✅ **Groq Integration**: Lightning-fast Llama 3.1-8B-Instant for all agents
 - ✅ **Sentiment Analysis Agent**: Detects emotions with thinking tags
 - ✅ **Enhanced Orchestrator**: Processes sentiment data and makes routing decisions
 - ✅ **External Prompts**: All agent personalities in markdown files
@@ -23,8 +24,10 @@ pip install -r requirements.txt
 ### 2. Environment Variables
 Make sure your `.env` file contains:
 ```
-OPENAI_API_KEY=your_openai_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
+
+**Note:** We switched from OpenAI to Groq for much faster inference with Llama 3.1-8B-Instant!
 
 ### 3. Run the Application
 
@@ -148,7 +151,7 @@ User Input → Sentiment Agent → Orchestrator → Normal Agent → Response
 ## Features
 
 - **Conversation Management:** Each conversation has a unique ID and maintains history
-- **OpenAI Integration:** Uses GPT-4o mini for all responses
+- **Groq Integration:** Uses Llama 3.1-8B-Instant for lightning-fast responses
 - **CORS Enabled:** Ready for frontend integration
 - **Error Handling:** Proper HTTP status codes and error messages
 - **Async Support:** Fully asynchronous for better performance
