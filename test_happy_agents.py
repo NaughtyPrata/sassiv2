@@ -53,19 +53,19 @@ def test_message(message, expected_agent=None):
 def main():
     """Run the test suite"""
     print("🚀 Testing Happy Agent Routing System")
-    print("Phase 3: Happy Agent Implementation")
+    print("Phase 3: Happy Agent Implementation (Clear Level Naming)")
     
     # Test cases for different happiness levels
     test_cases = [
-        # Ecstatic level (should trigger ecstatic agent)
+        # Level 3 - Ecstatic (should trigger ecstatic agent)
         ("I just won the lottery! I'm absolutely ecstatic!", "ecstatic"),
         ("This is the best day of my entire life! I'm over the moon!", "ecstatic"),
         
-        # Cheerful level (should trigger cheerful agent)  
+        # Level 2 - Cheerful (should trigger cheerful agent)  
         ("I had a great day at work today, feeling really good!", "cheerful"),
         ("Got some wonderful news, I'm quite happy about it!", "cheerful"),
         
-        # Pleased level (should trigger pleased agent)
+        # Level 1 - Pleased (should trigger pleased agent)
         ("Things went nicely today, I'm content.", "pleased"),
         ("Had a pleasant afternoon, feeling satisfied.", "pleased"),
         

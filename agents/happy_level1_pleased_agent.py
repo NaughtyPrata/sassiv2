@@ -1,12 +1,12 @@
 from typing import List
 from .base_agent import BaseAgent, ChatMessage
 
-class CheerfulAgent(BaseAgent):
-    """Cheerful agent with upbeat enthusiasm"""
+class HappyLevel1PleasedAgent(BaseAgent):
+    """Happy Level 1: Pleased agent with gentle positivity"""
     
     def __init__(self):
-        super().__init__("happy-2-cheerful.md")
+        super().__init__("happy-1-pleased.md")
     
     async def generate_response(self, messages: List[ChatMessage]) -> str:
-        """Generate cheerful, enthusiastic response"""
+        """Generate gently positive response"""
         return await self._call_groq(messages) 

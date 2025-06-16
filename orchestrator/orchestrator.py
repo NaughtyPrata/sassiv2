@@ -1,9 +1,9 @@
 from typing import List, Dict, Any, Tuple
 from agents.normal_agent import NormalAgent
 from agents.sentiment_agent import SentimentAgent
-from agents.pleased_agent import PleasedAgent
-from agents.cheerful_agent import CheerfulAgent
-from agents.ecstatic_agent import EcstaticAgent
+from agents.happy_level1_pleased_agent import HappyLevel1PleasedAgent
+from agents.happy_level2_cheerful_agent import HappyLevel2CheerfulAgent
+from agents.happy_level3_ecstatic_agent import HappyLevel3EcstaticAgent
 from agents.base_agent import ChatMessage
 
 class Orchestrator:
@@ -12,9 +12,9 @@ class Orchestrator:
     def __init__(self):
         self.normal_agent = NormalAgent()
         self.sentiment_agent = SentimentAgent()
-        self.pleased_agent = PleasedAgent()
-        self.cheerful_agent = CheerfulAgent()
-        self.ecstatic_agent = EcstaticAgent()
+        self.happy_level1_pleased_agent = HappyLevel1PleasedAgent()
+        self.happy_level2_cheerful_agent = HappyLevel2CheerfulAgent()
+        self.happy_level3_ecstatic_agent = HappyLevel3EcstaticAgent()
         self.current_agent = "normal"
         self.conversation_state = {}
         self.emotional_history = []  # Track emotional trajectory
@@ -95,11 +95,11 @@ class Orchestrator:
     async def _get_agent_response(self, agent_name: str, conversation_history: List[ChatMessage]) -> str:
         """Get response from the specified agent"""
         if agent_name == "pleased":
-            return await self.pleased_agent.generate_response(conversation_history)
+            return await self.happy_level1_pleased_agent.generate_response(conversation_history)
         elif agent_name == "cheerful":
-            return await self.cheerful_agent.generate_response(conversation_history)
+            return await self.happy_level2_cheerful_agent.generate_response(conversation_history)
         elif agent_name == "ecstatic":
-            return await self.ecstatic_agent.generate_response(conversation_history)
+            return await self.happy_level3_ecstatic_agent.generate_response(conversation_history)
         else:  # Default to normal agent
             return await self.normal_agent.generate_response(conversation_history)
     
