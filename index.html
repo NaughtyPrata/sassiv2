@@ -203,13 +203,60 @@
             background: #f0f0f0;
             border-bottom: 1px solid #e1e5e9;
         }
+
+        .sentiment-info {
+            font-size: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+            color: #555;
+        }
+
+        .sentiment-emotion {
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .sentiment-bar {
+            width: 100%;
+            height: 4px;
+            background: #e1e5e9;
+            border-radius: 2px;
+            margin: 4px 0;
+            overflow: hidden;
+        }
+
+        .sentiment-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .emotion-joy { background: #28a745; }
+        .emotion-happiness { background: #28a745; }
+        .emotion-anger { background: #dc3545; }
+        .emotion-frustration { background: #fd7e14; }
+        .emotion-sadness { background: #6f42c1; }
+        .emotion-fear { background: #6c757d; }
+        .emotion-neutral { background: #17a2b8; }
+
+        .thinking-section {
+            margin-top: 6px;
+            padding: 6px;
+            background: #fff;
+            border-radius: 4px;
+            font-style: italic;
+            border-left: 3px solid #667eea;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
             <h1>🤖 Emotional Chatbot</h1>
-            <div class="status">Phase 1 - Foundation | Normal Agent Active</div>
+            <div class="status">Phase 2 - Sentiment Analysis | Normal Agent + Sentiment Detection</div>
         </div>
         
         <div class="conversation-info">
@@ -219,8 +266,8 @@
         <div class="chat-messages" id="chatMessages">
             <div class="message assistant">
                 <div class="message-content">
-                    👋 Hello! I'm your emotional chatbot. I'm currently in Phase 1 with just the Normal agent active. How can I help you today?
-                    <div class="message-info">Agent: Normal | Ready to chat</div>
+                    👋 Hello! I'm your emotional chatbot. I'm now in Phase 2 with sentiment analysis! I can detect your emotions and show my reasoning. How can I help you today?
+                    <div class="message-info">Agent: Normal | Sentiment Analysis Active</div>
                 </div>
             </div>
         </div>
@@ -275,7 +322,6 @@
         async function sendMessage(message) {
             // Disable input and show user message
             setInputState(false);
-            addMessage('user', message);
             messageInput.value = '';
 
             // Show typing indicator
@@ -305,8 +351,9 @@
                     updateConversationInfo();
                 }
 
-                // Hide typing and show response
+                // Hide typing and show user message with sentiment analysis
                 showTyping(false);
+                addMessage('user', message, null, null, data.sentiment_analysis, data.orchestrator_decision);
                 addMessage('assistant', data.response, data.agent_type, data.timestamp);
 
             } catch (error) {
@@ -318,7 +365,7 @@
             }
         }
 
-        function addMessage(role, content, agentType = null, timestamp = null) {
+        function addMessage(role, content, agentType = null, timestamp = null, sentimentAnalysis = null, orchestratorDecision = null) {
             messageCount++;
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${role}`;
@@ -337,11 +384,37 @@
                 infoDiv.className = 'message-info';
                 infoDiv.textContent = new Date().toLocaleTimeString();
                 contentDiv.appendChild(infoDiv);
+                
+                // Add sentiment analysis for user messages
+                if (sentimentAnalysis) {
+                    const sentimentDiv = createSentimentDisplay(sentimentAnalysis, orchestratorDecision);
+                    contentDiv.appendChild(sentimentDiv);
+                }
             }
 
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
             scrollToBottom();
+        }
+
+        function createSentimentDisplay(sentiment, orchestrator) {
+            const sentimentDiv = document.createElement('div');
+            sentimentDiv.className = 'sentiment-info';
+            
+            const emotion = sentiment.emotion || 'neutral';
+            const intensity = sentiment.intensity || 0;
+            const confidence = sentiment.confidence || 0;
+            
+            sentimentDiv.innerHTML = `
+                <div><span class="sentiment-emotion">${emotion}</span> (${Math.round(intensity * 100)}% intensity, ${Math.round(confidence * 100)}% confidence)</div>
+                <div class="sentiment-bar">
+                    <div class="sentiment-fill emotion-${emotion}" style="width: ${intensity * 100}%"></div>
+                </div>
+                ${sentiment.thinking ? `<div class="thinking-section">💭 ${sentiment.thinking}</div>` : ''}
+                ${orchestrator && orchestrator.thinking ? `<div class="thinking-section">🧠 ${orchestrator.thinking}</div>` : ''}
+            `;
+            
+            return sentimentDiv;
         }
 
         function addErrorMessage(message) {
