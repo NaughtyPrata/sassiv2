@@ -19,7 +19,12 @@ class BaseAgent(ABC):
     """Base class for all agents"""
     
     def __init__(self, prompt_file: str):
-        self.system_prompt = load_prompt(prompt_file)
+        # Load core personality and agent-specific prompt
+        self.personality_prompt = load_prompt("sassi_personality.md")
+        self.agent_prompt = load_prompt(prompt_file)
+        
+        # Combine personality with agent-specific behavior
+        self.system_prompt = f"{self.personality_prompt}\n\n---\n\n{self.agent_prompt}"
         self.agent_type = self.__class__.__name__.lower().replace('agent', '')
     
     @abstractmethod
@@ -27,12 +32,23 @@ class BaseAgent(ABC):
         """Generate response based on conversation history"""
         pass
     
-    async def _call_groq(self, messages: List[ChatMessage], max_tokens: int = 1024, temperature: float = 0.7) -> str:
-        """Common Groq API call logic"""
+    def _trim_conversation_history(self, messages: List[ChatMessage], max_messages: int = 20) -> List[ChatMessage]:
+        """Trim conversation history to maintain context window while preserving memory"""
+        if len(messages) <= max_messages:
+            return messages
+        
+        # Keep the most recent messages for better context
+        return messages[-max_messages:]
+    
+    async def _call_groq(self, messages: List[ChatMessage], max_tokens: int = 1500, temperature: float = 0.7) -> str:
+        """Common Groq API call logic with expanded context window"""
         try:
+            # Trim conversation history to manage context window
+            trimmed_messages = self._trim_conversation_history(messages)
+            
             # Convert messages to Groq format
             groq_messages = [{"role": "system", "content": self.system_prompt}]
-            for msg in messages:
+            for msg in trimmed_messages:
                 groq_messages.append({"role": msg.role, "content": msg.content})
             
             completion = client.chat.completions.create(
