@@ -1,12 +1,19 @@
 from typing import List, Dict, Any
 import json
 from .base_agent import BaseAgent, ChatMessage
+from utils.prompt_loader import load_prompt
 
 class SentimentAgent(BaseAgent):
-    """Sentiment analysis agent with thinking tags"""
+    """Sentiment analysis agent with Sassi context"""
     
     def __init__(self):
-        super().__init__("sentiment_agent.md")
+        # Load mini personality for context and sentiment prompt
+        self.personality_context = load_prompt("sassi_personality_mini.md")
+        self.agent_prompt = load_prompt("sentiment_agent.md")
+        
+        # Combine mini personality with sentiment analysis instructions
+        self.system_prompt = f"{self.personality_context}\n\n---\n\n{self.agent_prompt}"
+        self.agent_type = "sentiment"
     
     async def analyze_sentiment(self, message: str) -> Dict[str, Any]:
         """Analyze sentiment of a single message with thinking process"""

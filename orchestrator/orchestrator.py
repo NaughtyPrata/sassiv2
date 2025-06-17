@@ -4,6 +4,10 @@ from agents.sentiment_agent import SentimentAgent
 from agents.happy_level1_pleased_agent import HappyLevel1PleasedAgent
 from agents.happy_level2_cheerful_agent import HappyLevel2CheerfulAgent
 from agents.happy_level3_ecstatic_agent import HappyLevel3EcstaticAgent
+from agents.angry_level1_irritated_agent import AngryLevel1IrritatedAgent
+from agents.angry_level2_agitated_agent import AngryLevel2AgitatedAgent
+from agents.angry_level3_enraged_agent import AngryLevel3EnragedAgent
+from agents.orchestrator_agent import OrchestratorAgent
 from agents.base_agent import ChatMessage
 
 class Orchestrator:
@@ -12,9 +16,15 @@ class Orchestrator:
     def __init__(self):
         self.normal_agent = NormalAgent()
         self.sentiment_agent = SentimentAgent()
+        self.orchestrator_agent = OrchestratorAgent()
+        # Happy agents
         self.happy_level1_pleased_agent = HappyLevel1PleasedAgent()
         self.happy_level2_cheerful_agent = HappyLevel2CheerfulAgent()
         self.happy_level3_ecstatic_agent = HappyLevel3EcstaticAgent()
+        # Angry agents
+        self.angry_level1_irritated_agent = AngryLevel1IrritatedAgent()
+        self.angry_level2_agitated_agent = AngryLevel2AgitatedAgent()
+        self.angry_level3_enraged_agent = AngryLevel3EnragedAgent()
         self.current_agent = "normal"
         self.conversation_state = {}
         self.emotional_history = []  # Track emotional trajectory
@@ -30,14 +40,18 @@ class Orchestrator:
         # Step 1: Analyze sentiment
         sentiment_analysis = await self.sentiment_agent.analyze_sentiment(message)
         
-        # Step 2: Make routing decision based on sentiment
-        next_agent, orchestrator_thinking = self._determine_agent(sentiment_analysis)
+        # Step 2: Make routing decision using prompt-based orchestrator
+        routing_decision = await self.orchestrator_agent.make_routing_decision(
+            sentiment_analysis, self.current_agent, message
+        )
+        next_agent = routing_decision.get("next_agent", "normal")
+        orchestrator_thinking = routing_decision
         
         # Step 3: Generate enhanced orchestrator insights
         orchestrator_insights = self._generate_insights(sentiment_analysis, orchestrator_thinking, message)
         
         # Step 4: Generate response using selected agent
-        response = await self._get_agent_response(next_agent, conversation_history)
+        response = await self._get_agent_response(next_agent, conversation_history, orchestrator_thinking)
         
         # Step 5: Update emotional history and current agent
         self._update_emotional_history(sentiment_analysis, next_agent)
@@ -75,11 +89,31 @@ class Orchestrator:
                 next_agent = "normal"
                 action = "de-escalate" if self.current_agent != "normal" else "maintain"
                 thinking = f"Low happiness intensity ({intensity:.1f}/1.0) detected. Staying with normal agent."
+        
+        # Angry emotion routing (anger, frustration, irritation, rage)
+        elif emotion in ['anger', 'frustration', 'irritation', 'rage', 'annoyance']:
+            if intensity >= 0.8:  # Enraged level (0.8-1.0)
+                next_agent = "enraged"
+                action = "escalate" if self.current_agent != "enraged" else "maintain"
+                thinking = f"High anger intensity ({intensity:.1f}/1.0) detected. Routing to enraged agent for intense anger expression."
+            elif intensity >= 0.5:  # Agitated level (0.5-0.7)
+                next_agent = "agitated"
+                action = "escalate" if self.current_agent in ["normal", "irritated"] else "de-escalate" if self.current_agent == "enraged" else "maintain"
+                thinking = f"Moderate anger intensity ({intensity:.1f}/1.0) detected. Routing to agitated agent for frustrated response."
+            elif intensity >= 0.3:  # Irritated level (0.3-0.4)
+                next_agent = "irritated"
+                action = "escalate" if self.current_agent == "normal" else "de-escalate" if self.current_agent in ["agitated", "enraged"] else "maintain"
+                thinking = f"Mild anger intensity ({intensity:.1f}/1.0) detected. Routing to irritated agent for annoyed response."
+            else:  # Low anger (0.1-0.2) - stay normal
+                next_agent = "normal"
+                action = "de-escalate" if self.current_agent != "normal" else "maintain"
+                thinking = f"Low anger intensity ({intensity:.1f}/1.0) detected. Staying with normal agent."
+        
         else:
-            # For non-happy emotions, use normal agent for now
+            # For other emotions, use normal agent
             next_agent = "normal"
             action = "de-escalate" if self.current_agent != "normal" else "maintain"
-            thinking = f"Non-happy emotion '{emotion}' detected with intensity {intensity:.1f}/1.0. Using normal agent (other emotional agents not yet implemented)."
+            thinking = f"Emotion '{emotion}' detected with intensity {intensity:.1f}/1.0. Using normal agent (other emotional agents not yet implemented)."
         
         orchestrator_thinking = {
             "current_agent": self.current_agent,
@@ -92,14 +126,59 @@ class Orchestrator:
         
         return next_agent, orchestrator_thinking
     
-    async def _get_agent_response(self, agent_name: str, conversation_history: List[ChatMessage]) -> str:
+    async def _get_agent_response(self, agent_name: str, conversation_history: List[ChatMessage], orchestrator_thinking: Dict[str, Any] = None) -> str:
         """Get response from the specified agent"""
+        # Happy agents
         if agent_name == "pleased":
             return await self.happy_level1_pleased_agent.generate_response(conversation_history)
         elif agent_name == "cheerful":
             return await self.happy_level2_cheerful_agent.generate_response(conversation_history)
         elif agent_name == "ecstatic":
             return await self.happy_level3_ecstatic_agent.generate_response(conversation_history)
+        # Angry agents
+        elif agent_name == "irritated":
+            return await self.angry_level1_irritated_agent.generate_response(conversation_history)
+        elif agent_name == "agitated":
+            return await self.angry_level2_agitated_agent.generate_response(conversation_history)
+        elif agent_name == "enraged":
+            # Pass counter info to enraged agent if available
+            counter_info = orchestrator_thinking.get("counter_info")
+            if counter_info:
+                # Add counter info to conversation context
+                counter_display = counter_info.get("display", "🤬 2/2")
+                # Create a system message with counter info
+                counter_context = ChatMessage(
+                    role="system",
+                    content=f"""
+MANDATORY ANGER COUNTER DISPLAY: {counter_display}
+
+CRITICAL INSTRUCTIONS:
+- You MUST start your response with: <t>{counter_display} [your thoughts]</t>
+- NEVER skip the anger counter display
+- Use the EXACT format: <t>{counter_display} [YOUR ANGRY THOUGHTS IN ALL CAPS]</t>
+- Then follow with your ALL-CAPS vulgar response
+- The counter display is MANDATORY and MUST appear in every response
+"""
+                )
+                enhanced_history = conversation_history + [counter_context]
+                return await self.angry_level3_enraged_agent.generate_response(enhanced_history)
+            else:
+                # Fallback with default counter
+                counter_context = ChatMessage(
+                    role="system",
+                    content=f"""
+MANDATORY ANGER COUNTER DISPLAY: 🤬 2/2
+
+CRITICAL INSTRUCTIONS:
+- You MUST start your response with: <t>🤬 2/2 [your thoughts]</t>
+- NEVER skip the anger counter display
+- Use the EXACT format: <t>🤬 2/2 [YOUR ANGRY THOUGHTS IN ALL CAPS]</t>
+- Then follow with your ALL-CAPS vulgar response
+- The counter display is MANDATORY and MUST appear in every response
+"""
+                )
+                enhanced_history = conversation_history + [counter_context]
+                return await self.angry_level3_enraged_agent.generate_response(enhanced_history)
         else:  # Default to normal agent
             return await self.normal_agent.generate_response(conversation_history)
     
@@ -218,15 +297,20 @@ class Orchestrator:
     def _generate_orchestrator_suggestion(self, agent: str, emotion: str, intensity: float, action: str) -> str:
         """Generate orchestrator's reasoning and suggestion"""
         agent_descriptions = {
-            "normal": "balanced, professional responses for neutral or non-happy emotions",
+            "normal": "balanced, professional responses for neutral emotions",
             "pleased": "gentle positivity and contentment for mild happiness",
             "cheerful": "upbeat enthusiasm and energy for moderate happiness", 
-            "ecstatic": "overwhelming joy and celebration for intense happiness"
+            "ecstatic": "overwhelming joy and celebration for intense happiness",
+            "irritated": "mild annoyance and impatience for low-level anger",
+            "agitated": "clear frustration and agitation for moderate anger",
+            "enraged": "intense fury and hostility for high-level anger"
         }
         
         agent_desc = agent_descriptions.get(agent, "appropriate emotional response")
         
         if emotion in ['joy', 'happiness', 'excitement', 'enthusiasm']:
             return f"Using {agent} agent for {agent_desc}. Intensity {intensity:.1f} matches {agent} emotional range perfectly."
+        elif emotion in ['anger', 'frustration', 'irritation', 'rage', 'annoyance']:
+            return f"Using {agent} agent for {agent_desc}. Intensity {intensity:.1f} requires appropriate anger expression and venting."
         else:
-            return f"Using {agent} agent for {agent_desc}. Non-happy emotion '{emotion}' requires measured, supportive response."
+            return f"Using {agent} agent for {agent_desc}. Emotion '{emotion}' requires measured, supportive response."
