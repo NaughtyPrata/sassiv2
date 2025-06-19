@@ -4,6 +4,9 @@ from agents.sentiment_agent import SentimentAgent
 from agents.happy_level1_pleased_agent import HappyLevel1PleasedAgent
 from agents.happy_level2_cheerful_agent import HappyLevel2CheerfulAgent
 from agents.happy_level3_ecstatic_agent import HappyLevel3EcstaticAgent
+from agents.sad_level1_melancholy_agent import SadLevel1MelancholyAgent
+from agents.sad_level2_sorrowful_agent import SadLevel2SorrowfulAgent
+from agents.sad_level3_depressed_agent import SadLevel3DepressedAgent
 from agents.angry_level1_irritated_agent import AngryLevel1IrritatedAgent
 from agents.angry_level2_agitated_agent import AngryLevel2AgitatedAgent
 from agents.angry_level3_enraged_agent import AngryLevel3EnragedAgent
@@ -21,6 +24,10 @@ class Orchestrator:
         self.happy_level1_pleased_agent = HappyLevel1PleasedAgent()
         self.happy_level2_cheerful_agent = HappyLevel2CheerfulAgent()
         self.happy_level3_ecstatic_agent = HappyLevel3EcstaticAgent()
+        # Sad agents
+        self.sad_level1_melancholy_agent = SadLevel1MelancholyAgent()
+        self.sad_level2_sorrowful_agent = SadLevel2SorrowfulAgent()
+        self.sad_level3_depressed_agent = SadLevel3DepressedAgent()
         # Angry agents
         self.angry_level1_irritated_agent = AngryLevel1IrritatedAgent()
         self.angry_level2_agitated_agent = AngryLevel2AgitatedAgent()
@@ -135,6 +142,13 @@ class Orchestrator:
             return await self.happy_level2_cheerful_agent.generate_response(conversation_history)
         elif agent_name == "ecstatic":
             return await self.happy_level3_ecstatic_agent.generate_response(conversation_history)
+        # Sad agents
+        elif agent_name == "melancholy":
+            return await self.sad_level1_melancholy_agent.generate_response(conversation_history)
+        elif agent_name == "sorrowful":
+            return await self.sad_level2_sorrowful_agent.generate_response(conversation_history)
+        elif agent_name == "depressed":
+            return await self.sad_level3_depressed_agent.generate_response(conversation_history)
         # Angry agents
         elif agent_name == "irritated":
             return await self.angry_level1_irritated_agent.generate_response(conversation_history)
@@ -301,6 +315,9 @@ CRITICAL INSTRUCTIONS:
             "pleased": "gentle positivity and contentment for mild happiness",
             "cheerful": "upbeat enthusiasm and energy for moderate happiness", 
             "ecstatic": "overwhelming joy and celebration for intense happiness",
+            "melancholy": "gentle, wistful sadness and contemplative responses for mild sadness",
+            "sorrowful": "deeper emotional weight and vulnerability for moderate sadness",
+            "depressed": "profound sadness and emotional struggle for intense sadness",
             "irritated": "mild annoyance and impatience for low-level anger",
             "agitated": "clear frustration and agitation for moderate anger",
             "enraged": "intense fury and hostility for high-level anger"

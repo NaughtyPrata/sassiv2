@@ -50,6 +50,21 @@ class ChatResponse(BaseModel):
 # Initialize orchestrator
 orchestrator = Orchestrator()
 
+@app.on_event("startup")
+async def startup_event():
+    """Reset orchestrator state on server startup"""
+    print("🔄 Server starting up - resetting orchestrator state...")
+    orchestrator.orchestrator_agent.reset_counter()
+    orchestrator.current_agent = "normal"
+    orchestrator.emotional_history = []
+    conversations.clear()
+    print("✅ Orchestrator state reset complete")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up on server shutdown"""
+    print("🛑 Server shutting down - cleaning up state...")
+
 @app.get("/")
 async def root():
     return {"message": "Emotional Chatbot API is running!", "version": "2.0.0", "phase": "2 - Sentiment Analysis"}
@@ -135,6 +150,22 @@ async def delete_conversation(conversation_id: str):
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now()}
+
+@app.post("/reset")
+async def reset_state():
+    """Reset orchestrator state and clear all conversations"""
+    print("🔄 Manual state reset requested...")
+    orchestrator.orchestrator_agent.reset_counter()
+    orchestrator.current_agent = "normal"
+    orchestrator.emotional_history = []
+    conversations.clear()
+    print("✅ Manual state reset complete")
+    return {
+        "message": "State reset successfully", 
+        "timestamp": datetime.now(),
+        "current_agent": orchestrator.current_agent,
+        "anger_counter": orchestrator.orchestrator_agent.anger_counter
+    }
 
 if __name__ == "__main__":
     import uvicorn
