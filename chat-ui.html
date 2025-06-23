@@ -9,9 +9,47 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/custom.css">
   <link rel="stylesheet" href="css/fallout-theme.css">
+  <!-- Source Code Pro font -->
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen">
   <div class="flex w-full min-h-screen">
+    <!-- Agents Panel (Far Left) -->
+    <aside class="w-64 bg-gray-100 border-r flex flex-col p-6 space-y-4" id="agents-panel">
+      <h2 class="text-lg font-semibold mb-4">AIエージェント</h2>
+      <ul class="space-y-2">
+        <li id="agent-normal" class="agent-list-item active-agent flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Normal</span>
+        </li>
+        <li id="agent-happy-level1-pleased" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Happy: Pleased</span>
+        </li>
+        <li id="agent-happy-level2-cheerful" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Happy: Cheerful</span>
+        </li>
+        <li id="agent-happy-level3-ecstatic" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Happy: Ecstatic</span>
+        </li>
+        <li id="agent-sad-level1-melancholy" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Sad: Melancholy</span>
+        </li>
+        <li id="agent-sad-level2-sorrowful" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Sad: Sorrowful</span>
+        </li>
+        <li id="agent-sad-level3-depressed" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Sad: Depressed</span>
+        </li>
+        <li id="agent-angry-level1-irritated" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Angry: Irritated</span>
+        </li>
+        <li id="agent-angry-level2-agitated" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Angry: Agitated</span>
+        </li>
+        <li id="agent-angry-level3-enraged" class="agent-list-item flex items-center gap-2 px-3 py-2 rounded transition">
+          <span class="font-mono">Angry: Enraged</span>
+        </li>
+      </ul>
+    </aside>
     <!-- Chat Section (Left) -->
     <div class="flex flex-col flex-1 min-w-0">
       <!-- Header -->
@@ -46,46 +84,48 @@
       </footer>
     </div>
     <!-- Indicators Panel (Right) -->
-    <aside class="w-96 bg-gray-100 border-l flex flex-col p-8 space-y-8">
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Current State</h2>
-        <div class="text-xl">😊 <span class="font-bold">PLEASED</span></div>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Anger Meter</h2>
-        <div class="w-full h-5 bg-gray-200 rounded-lg mb-1">
-          <div class="h-5 bg-red-400 rounded-lg" style="width: 35%"></div>
-        </div>
-        <div class="text-xs text-gray-500">35/100 pts</div>
-        <div class="text-xs text-gray-400 mt-1">Calm | Irritated | Agitated | Enraged</div>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Intensity</h2>
-        <div class="text-lg font-bold">0.6/1.0</div>
-        <div class="text-xs text-gray-500">Moderate emotion</div>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Trajectory</h2>
-        <div class="text-xs text-gray-600">normal[neutral(0.2)] → pleased[joy(0.6)] → pleased[joy(0.6)] (stable)</div>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Triggers</h2>
-        <div class="flex flex-wrap gap-2">
-          <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">'happy'</span>
-          <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">'great'</span>
-          <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">'wonderful'</span>
-        </div>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">AI Insights</h2>
-        <div class="text-xs text-gray-700 mb-1"><strong>State Transition:</strong> Escalating from normal to pleased due to intensity 0.6 requiring more emotional engagement</div>
-        <div class="text-xs text-gray-700"><strong>Strategy:</strong> Using pleased agent for gentle positivity and contentment. Intensity 0.6 matches pleased emotional range perfectly.</div>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Debug Mode</h2>
-        <!-- Toggle placeholder -->
-        <div id="debug-toggle-placeholder"></div>
-      </section>
+    <aside class="w-96 bg-gray-100 border-l flex flex-col p-8 justify-between" style="min-height: 0;">
+      <div class="flex-1 flex flex-col space-y-8">
+        <section>
+          <h2 class="text-lg font-semibold mb-2">エージェントのステータス</h2>
+          <div class="text-xl">😊 <span class="font-bold">PLEASED</span></div>
+        </section>
+        <section>
+          <h2 class="text-lg font-semibold mb-2">Anger Meter</h2>
+          <div class="w-full h-5 bg-gray-200 rounded-lg mb-1">
+            <div class="h-5 bg-red-400 rounded-lg" style="width: 35%"></div>
+          </div>
+          <div class="text-xs text-gray-500">35/100 pts</div>
+          <div class="text-xs text-gray-400 mt-1">Calm | Irritated | Agitated | Enraged</div>
+        </section>
+        <section>
+          <h2 class="text-lg font-semibold mb-2">Intensity</h2>
+          <div class="text-lg font-bold">0.6/1.0</div>
+          <div class="text-xs text-gray-500">Moderate emotion</div>
+        </section>
+        <section>
+          <h2 class="text-lg font-semibold mb-2">Trajectory</h2>
+          <div class="text-xs text-gray-600">normal[neutral(0.2)] → pleased[joy(0.6)] → pleased[joy(0.6)] (stable)</div>
+        </section>
+        <section>
+          <h2 class="text-lg font-semibold mb-2">Triggers</h2>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">'happy'</span>
+            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">'great'</span>
+            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">'wonderful'</span>
+          </div>
+        </section>
+        <section>
+          <h2 class="text-lg font-semibold mb-2">AI Insights</h2>
+          <div class="text-xs text-gray-700 mb-1"><strong>State Transition:</strong> Escalating from normal to pleased due to intensity 0.6 requiring more emotional engagement</div>
+          <div class="text-xs text-gray-700"><strong>Strategy:</strong> Using pleased agent for gentle positivity and contentment. Intensity 0.6 matches pleased emotional range perfectly.</div>
+        </section>
+        <section>
+          <h2 class="text-lg font-semibold mb-2">Debug Mode</h2>
+          <!-- Toggle placeholder -->
+          <div id="debug-toggle-placeholder"></div>
+        </section>
+      </div>
       <button class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded mt-4">Reset Conversation</button>
     </aside>
   </div>

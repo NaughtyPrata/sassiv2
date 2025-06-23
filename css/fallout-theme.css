@@ -1,19 +1,19 @@
 /* Fallout Retro Terminal Theme - fallout-theme.css */
 
 body {
-  background: #181b26;
+  background: #101218;
   color: #7fd6ff;
-  font-family: 'Share Tech Mono', 'Fira Mono', 'Consolas', monospace;
+  font-family: 'Source Code Pro', 'Fira Mono', 'Consolas', monospace;
   letter-spacing: 0.03em;
   text-shadow: 0 0 2px #7fd6ff, 0 0 8px #1e3a5c;
 }
 
 header, footer, aside, main, .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-  background: #181b26 !important;
+  background: #101218 !important;
   color: #7fd6ff !important;
   border-radius: 8px;
   border: 2px solid #1e90ff;
-  box-shadow: 0 2px 8px #10121a, 0 0 0 4px #1e3a5c inset;
+  box-shadow: 0 2px 8px #08090c, 0 0 0 4px #1e3a5c inset;
 }
 
 h1, h2, h3, .font-bold, .font-semibold {
@@ -22,7 +22,7 @@ h1, h2, h3, .font-bold, .font-semibold {
 }
 
 input[type="text"] {
-  background: #10121a;
+  background: #08090c;
   color: #7fd6ff;
   border: 2px solid #1e90ff;
   border-radius: 6px;
@@ -30,24 +30,24 @@ input[type="text"] {
 }
 
 button, .bg-blue-500, .bg-blue-600, .bg-red-500, .bg-red-600 {
-  background: linear-gradient(180deg, #1e3a5c 0%, #23273a 100%) !important;
+  background: linear-gradient(180deg, #1e3a5c 0%, #101218 100%) !important;
   color: #b6eaff !important;
   border: 2px solid #7fd6ff;
   border-radius: 8px;
   font-weight: bold;
   text-shadow: 0 0 2px #7fd6ff;
-  box-shadow: 0 2px 8px #141a2e;
+  box-shadow: 0 2px 8px #08090c;
   transition: background 0.2s;
 }
 
 button:hover, .bg-blue-600:hover, .bg-red-600:hover {
   background: #1e90ff !important;
-  color: #23273a !important;
+  color: #101218 !important;
 }
 
 /* Message bubbles */
 .bg-gray-100, .bg-blue-100 {
-  background: #10121a !important;
+  background: #08090c !important;
   color: #7fd6ff !important;
   border: 2px solid #1e3a5c;
   border-radius: 10px;
@@ -84,7 +84,7 @@ body::before {
 
 /* Triggers tags */
 .bg-blue-100 {
-  background: #181b26 !important;
+  background: #101218 !important;
   border: 1px solid #7fd6ff;
   color: #7fd6ff !important;
   box-shadow: 0 0 4px #7fd6ff inset;
@@ -93,7 +93,7 @@ body::before {
 /* Debug toggle placeholder */
 #debug-toggle-placeholder {
   border: 2px dashed #7fd6ff;
-  background: #10121a;
+  background: #08090c;
   min-height: 32px;
   border-radius: 6px;
 }
@@ -101,9 +101,27 @@ body::before {
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 10px;
-  background: #181b26;
+  background: #101218;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e3a5c;
   border-radius: 6px;
+}
+
+/* Agents Panel Styles */
+.agent-list-item {
+  background: #10121a;
+  color: #7fd6ff;
+  border: 2px solid transparent;
+  box-shadow: 0 0 4px #1e3a5c inset;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s, box-shadow 0.2s;
+}
+.active-agent {
+  background: #1e90ff;
+  border: 2px solid #7fd6ff;
+  color: #101218;
+  font-weight: bold;
+  box-shadow: 0 0 12px #7fd6ff;
+  z-index: 1;
 } 
