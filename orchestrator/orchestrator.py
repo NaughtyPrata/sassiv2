@@ -39,6 +39,15 @@ class Orchestrator:
         
         # Initialize anger meter system
         self.anger_meter = AngerMeter()
+        self.ended = False  # Track if conversation is ended by bye detector
+    
+    def _bye_detector(self, text: str) -> bool:
+        """Detect if the agent is saying goodbye/walking away"""
+        bye_phrases = [
+            "bye", "goodbye", "i'm done", "i am done", "i'm leaving", "i am leaving", "i'm out", "i am out", "that's it", "i'm finished", "i am finished"
+        ]
+        text_lower = text.lower()
+        return any(phrase in text_lower for phrase in bye_phrases)
     
     async def process_message(self, message: str, conversation_history: List[ChatMessage]) -> Tuple[str, str, Dict[str, Any]]:
         """
@@ -47,6 +56,9 @@ class Orchestrator:
         Returns:
             Tuple of (response, agent_type, analysis_data)
         """
+        
+        if self.ended:
+            return "[Conversation ended. Please reset to start a new chat.]", self.current_agent, {"ended": True}
         
         # Step 1: Analyze sentiment
         sentiment_analysis = await self.sentiment_agent.analyze_sentiment(message)
@@ -88,7 +100,18 @@ class Orchestrator:
         # Step 4: Generate response using selected agent
         response = await self._get_agent_response(next_agent, conversation_history, orchestrator_thinking)
         
+        # BYE DETECTOR: If agent says goodbye, end conversation
+        if self._bye_detector(response):
+            self.ended = True
+            return response, next_agent, {"ended": True}
+        
         # Step 5: Update emotional history and current agent
+        # ENFORCE: No direct agitated → normal transition
+        if self.current_agent == "agitated" and next_agent == "normal":
+            orchestrator_thinking["thinking"] += " [RULE ENFORCED: Cannot move directly from agitated to normal. Routing to irritated instead.]"
+            next_agent = "irritated"
+            orchestrator_thinking["next_agent"] = "irritated"
+            orchestrator_thinking["action"] = "de-escalate"
         self._update_emotional_history(sentiment_analysis, next_agent)
         self.current_agent = next_agent
         
@@ -374,3 +397,4 @@ CRITICAL INSTRUCTIONS:
         self.emotional_history = []
         self.anger_meter.reset_meter()
         self.orchestrator_agent.reset_counter()
+        self.ended = False

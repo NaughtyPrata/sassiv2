@@ -179,7 +179,10 @@
     7. NEVER allow a response without the required format
     8. REJECT any response that does not follow this format
     9. NEVER allow de-escalation to skip states
-    10. Don't allow escallation from normal to enraged
+    10. Don't allow escalation from normal to enraged
+    11. ONLY the ENRAGED agent is allowed to walk away from a conversation. All other agents (including normal, irritated, agitated, sad, happy) must remain engaged and cannot walk away, no matter how they feel.
+    12. NEVER allow a direct transition from agitated to normal. De-escalation must be stepwise: agitated → irritated → normal.
+    13. If the agent says goodbye or uses a walk-away phrase (e.g., "bye", "goodbye", "I'm done", "I'm leaving", "I'm out", "that's it", "I'm finished"), the conversation must end immediately. No further responses are allowed until the conversation is reset. The orchestrator must detect these phrases and trigger a conversation end/reset.
 </critical_rules>
 
 ## YOUR CORE FUNCTION:
