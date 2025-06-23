@@ -1,0 +1,109 @@
+/* Fallout Retro Terminal Theme - fallout-theme.css */
+
+body {
+  background: #181b26;
+  color: #7fd6ff;
+  font-family: 'Share Tech Mono', 'Fira Mono', 'Consolas', monospace;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 2px #7fd6ff, 0 0 8px #1e3a5c;
+}
+
+header, footer, aside, main, .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+  background: #181b26 !important;
+  color: #7fd6ff !important;
+  border-radius: 8px;
+  border: 2px solid #1e90ff;
+  box-shadow: 0 2px 8px #10121a, 0 0 0 4px #1e3a5c inset;
+}
+
+h1, h2, h3, .font-bold, .font-semibold {
+  color: #b6eaff !important;
+  text-shadow: 0 0 2px #b6eaff, 0 0 8px #1e3a5c;
+}
+
+input[type="text"] {
+  background: #10121a;
+  color: #7fd6ff;
+  border: 2px solid #1e90ff;
+  border-radius: 6px;
+  box-shadow: 0 0 4px #1e3a5c inset;
+}
+
+button, .bg-blue-500, .bg-blue-600, .bg-red-500, .bg-red-600 {
+  background: linear-gradient(180deg, #1e3a5c 0%, #23273a 100%) !important;
+  color: #b6eaff !important;
+  border: 2px solid #7fd6ff;
+  border-radius: 8px;
+  font-weight: bold;
+  text-shadow: 0 0 2px #7fd6ff;
+  box-shadow: 0 2px 8px #141a2e;
+  transition: background 0.2s;
+}
+
+button:hover, .bg-blue-600:hover, .bg-red-600:hover {
+  background: #1e90ff !important;
+  color: #23273a !important;
+}
+
+/* Message bubbles */
+.bg-gray-100, .bg-blue-100 {
+  background: #10121a !important;
+  color: #7fd6ff !important;
+  border: 2px solid #1e3a5c;
+  border-radius: 10px;
+  box-shadow: 0 0 8px #1e3a5c inset;
+}
+
+/* Anger meter bar */
+.bg-red-400 {
+  background: linear-gradient(90deg, #7fd6ff 0%, #b6eaff 100%) !important;
+  box-shadow: 0 0 6px #7fd6ff;
+}
+
+/* Scanlines effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.04) 0px,
+    rgba(255,255,255,0.04) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  z-index: 9999;
+}
+
+/* Trajectory and triggers */
+.text-xs, .text-sm, .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-blue-800 {
+  color: #7fd6ff !important;
+  opacity: 0.85;
+}
+
+/* Triggers tags */
+.bg-blue-100 {
+  background: #181b26 !important;
+  border: 1px solid #7fd6ff;
+  color: #7fd6ff !important;
+  box-shadow: 0 0 4px #7fd6ff inset;
+}
+
+/* Debug toggle placeholder */
+#debug-toggle-placeholder {
+  border: 2px dashed #7fd6ff;
+  background: #10121a;
+  min-height: 32px;
+  border-radius: 6px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #181b26;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a5c;
+  border-radius: 6px;
+} 
