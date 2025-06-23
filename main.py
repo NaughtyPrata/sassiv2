@@ -54,9 +54,7 @@ orchestrator = Orchestrator()
 async def startup_event():
     """Reset orchestrator state on server startup"""
     print("🔄 Server starting up - resetting orchestrator state...")
-    orchestrator.orchestrator_agent.reset_counter()
-    orchestrator.current_agent = "normal"
-    orchestrator.emotional_history = []
+    orchestrator.reset_state()  # Use the new reset method
     conversations.clear()
     print("✅ Orchestrator state reset complete")
 
@@ -79,6 +77,11 @@ async def chat(request: ChatRequest):
         # Get or create conversation history
         if conversation_id not in conversations:
             conversations[conversation_id] = []
+            # Reset orchestrator state for new conversations
+            print(f"🆕 New conversation {conversation_id[:8]}... - resetting orchestrator state")
+            print(f"   Before reset: anger_points={orchestrator.anger_meter.anger_points}, agent={orchestrator.current_agent}")
+            orchestrator.reset_state()
+            print(f"   After reset: anger_points={orchestrator.anger_meter.anger_points}, agent={orchestrator.current_agent}")
         
         conversation_history = conversations[conversation_id]
         
@@ -155,16 +158,15 @@ async def health_check():
 async def reset_state():
     """Reset orchestrator state and clear all conversations"""
     print("🔄 Manual state reset requested...")
-    orchestrator.orchestrator_agent.reset_counter()
-    orchestrator.current_agent = "normal"
-    orchestrator.emotional_history = []
+    orchestrator.reset_state()  # Use the new reset method
     conversations.clear()
     print("✅ Manual state reset complete")
     return {
         "message": "State reset successfully", 
         "timestamp": datetime.now(),
         "current_agent": orchestrator.current_agent,
-        "anger_counter": orchestrator.orchestrator_agent.anger_counter
+        "anger_counter": orchestrator.orchestrator_agent.anger_counter,
+        "anger_points": orchestrator.anger_meter.anger_points
     }
 
 if __name__ == "__main__":

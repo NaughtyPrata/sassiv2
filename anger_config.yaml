@@ -1,0 +1,48 @@
+# Anger Meter Configuration
+# This file controls the anger escalation system behavior
+# Modify these values to fine-tune how anger builds up and dissipates
+
+# Point calculation settings
+anger_multiplier: 15.0  # Base multiplier for sentiment intensity (0.7 intensity = 10.5 points)
+
+# Agent switching thresholds (anger points required)
+thresholds:
+  irritated: 15    # Level 1: Mildly annoyed
+  agitated: 35     # Level 2: Clearly frustrated  
+  enraged: 100     # Level 3: Full rage mode
+
+# Decay settings (how anger diminishes over time)
+decay:
+  idle_rate: 2           # Points lost per message when no anger detected
+  time_decay_enabled: false  # Enable time-based decay (not just message-based)
+  time_rate: 0.5         # Points lost per minute (if time_decay_enabled)
+  minimum_floor: 0       # Lowest anger can go
+
+# Contextual bonuses and penalties
+bonuses:
+  consecutive_anger: 5        # Extra points for back-to-back angry messages
+  rapid_escalation: 3         # Bonus when anger builds quickly
+  vulgar_language: 15         # Extra points for swearing/offensive language
+  direct_insults: 25          # Extra points for personal attacks/insults
+  
+penalties:
+  apology_reduction: -15      # Points removed when user apologizes
+  calm_language: -5           # Points removed for peaceful/calm messages
+  positive_emotion: -10       # Points removed when happiness/joy detected
+
+# Meter behavior
+meter:
+  max_points: 100            # Maximum anger points possible
+  escalation_cooldown: 2     # Messages to wait before allowing escalation again
+  de_escalation_immediate: true  # Allow immediate de-escalation when anger drops
+
+# De-escalation rules (specific to enraged state)
+de_escalation:
+  enraged_apology_requirement: 2    # Number of apologies required to allow de-escalation from enraged
+  apology_memory_limit: 5           # How many messages to remember apologies for
+  reset_apology_count_on_anger: true  # Reset apology count if user gets angry again
+
+# Debug settings
+debug:
+  show_meter_in_response: true   # Include anger meter info in API responses
+  log_point_changes: true        # Log every point change for debugging 

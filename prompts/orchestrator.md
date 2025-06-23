@@ -179,6 +179,7 @@
     7. NEVER allow a response without the required format
     8. REJECT any response that does not follow this format
     9. NEVER allow de-escalation to skip states
+    10. Don't allow escallation from normal to enraged
 </critical_rules>
 
 ## YOUR CORE FUNCTION:

@@ -12,6 +12,7 @@ from agents.angry_level2_agitated_agent import AngryLevel2AgitatedAgent
 from agents.angry_level3_enraged_agent import AngryLevel3EnragedAgent
 from agents.orchestrator_agent import OrchestratorAgent
 from agents.base_agent import ChatMessage
+from utils.anger_meter import AngerMeter
 
 class Orchestrator:
     """Enhanced orchestrator that manages conversation flow with sentiment analysis"""
@@ -35,6 +36,9 @@ class Orchestrator:
         self.current_agent = "normal"
         self.conversation_state = {}
         self.emotional_history = []  # Track emotional trajectory
+        
+        # Initialize anger meter system
+        self.anger_meter = AngerMeter()
     
     async def process_message(self, message: str, conversation_history: List[ChatMessage]) -> Tuple[str, str, Dict[str, Any]]:
         """
@@ -47,12 +51,36 @@ class Orchestrator:
         # Step 1: Analyze sentiment
         sentiment_analysis = await self.sentiment_agent.analyze_sentiment(message)
         
-        # Step 2: Make routing decision using prompt-based orchestrator
-        routing_decision = await self.orchestrator_agent.make_routing_decision(
-            sentiment_analysis, self.current_agent, message
-        )
-        next_agent = routing_decision.get("next_agent", "normal")
-        orchestrator_thinking = routing_decision
+        # Step 2: Process anger meter for anger-related emotions
+        anger_emotions = ['anger', 'frustration', 'irritation', 'rage', 'annoyance']
+        emotion = sentiment_analysis.get('emotion', 'neutral')
+        
+        if emotion in anger_emotions:
+            # Use anger meter system for anger routing
+            anger_agent, anger_meter_info = self.anger_meter.process_message(message, sentiment_analysis)
+            next_agent = anger_agent
+            
+            # Create orchestrator thinking for anger meter decision
+            orchestrator_thinking = {
+                "current_agent": self.current_agent,
+                "next_agent": next_agent,
+                "action": "anger_meter_routing",
+                "thinking": f"Anger meter system activated. Current anger points: {anger_meter_info['anger_points']}, routing to {anger_agent} agent.",
+                "emotion_detected": emotion,
+                "intensity_detected": sentiment_analysis.get('intensity', 0),
+                "anger_meter": anger_meter_info
+            }
+        else:
+            # Use original orchestrator logic for non-anger emotions
+            routing_decision = await self.orchestrator_agent.make_routing_decision(
+                sentiment_analysis, self.current_agent, message
+            )
+            next_agent = routing_decision.get("next_agent", "normal")
+            orchestrator_thinking = routing_decision
+            
+            # Apply anger meter decay for non-anger messages
+            _, anger_meter_info = self.anger_meter.process_message(message, sentiment_analysis)
+            orchestrator_thinking["anger_meter"] = anger_meter_info
         
         # Step 3: Generate enhanced orchestrator insights
         orchestrator_insights = self._generate_insights(sentiment_analysis, orchestrator_thinking, message)
@@ -135,66 +163,73 @@ class Orchestrator:
     
     async def _get_agent_response(self, agent_name: str, conversation_history: List[ChatMessage], orchestrator_thinking: Dict[str, Any] = None) -> str:
         """Get response from the specified agent"""
+        
+        # Universal instruction for all agents to use <t></t> tags
+        universal_instruction = ChatMessage(
+            role="system",
+            content="You will use <t></t> tags"
+        )
+        
+        # Add universal instruction to all agents
+        enhanced_history = conversation_history + [universal_instruction]
+        
         # Happy agents
         if agent_name == "pleased":
-            return await self.happy_level1_pleased_agent.generate_response(conversation_history)
+            return await self.happy_level1_pleased_agent.generate_response(enhanced_history)
         elif agent_name == "cheerful":
-            return await self.happy_level2_cheerful_agent.generate_response(conversation_history)
+            return await self.happy_level2_cheerful_agent.generate_response(enhanced_history)
         elif agent_name == "ecstatic":
-            return await self.happy_level3_ecstatic_agent.generate_response(conversation_history)
+            return await self.happy_level3_ecstatic_agent.generate_response(enhanced_history)
         # Sad agents
         elif agent_name == "melancholy":
-            return await self.sad_level1_melancholy_agent.generate_response(conversation_history)
+            return await self.sad_level1_melancholy_agent.generate_response(enhanced_history)
         elif agent_name == "sorrowful":
-            return await self.sad_level2_sorrowful_agent.generate_response(conversation_history)
+            return await self.sad_level2_sorrowful_agent.generate_response(enhanced_history)
         elif agent_name == "depressed":
-            return await self.sad_level3_depressed_agent.generate_response(conversation_history)
+            return await self.sad_level3_depressed_agent.generate_response(enhanced_history)
         # Angry agents
         elif agent_name == "irritated":
-            return await self.angry_level1_irritated_agent.generate_response(conversation_history)
+            return await self.angry_level1_irritated_agent.generate_response(enhanced_history)
         elif agent_name == "agitated":
-            return await self.angry_level2_agitated_agent.generate_response(conversation_history)
+            return await self.angry_level2_agitated_agent.generate_response(enhanced_history)
         elif agent_name == "enraged":
-            # Pass counter info to enraged agent if available
-            counter_info = orchestrator_thinking.get("counter_info")
-            if counter_info:
-                # Add counter info to conversation context
-                counter_display = counter_info.get("display", "🤬 2/2")
-                # Create a system message with counter info
-                counter_context = ChatMessage(
-                    role="system",
-                    content=f"""
-MANDATORY ANGER COUNTER DISPLAY: {counter_display}
+            # Use anger meter data for dynamic counter display
+            anger_meter_info = orchestrator_thinking.get("anger_meter", {})
+            anger_points = anger_meter_info.get("anger_points", 100)
+            max_points = anger_meter_info.get("max_points", 100)
+            
+            # Calculate dynamic anger level (0-3 scale for display)
+            anger_percentage = anger_points / max_points
+            if anger_percentage >= 0.9:
+                counter_level = 3
+            elif anger_percentage >= 0.7:
+                counter_level = 2
+            else:
+                counter_level = 1
+                
+            counter_display = f"🔥 {int(anger_points)}/{max_points} pts (LVL {counter_level})"
+            
+            # Create a system message with dynamic anger meter info (in addition to universal instruction)
+            counter_context = ChatMessage(
+                role="system",
+                content=f"""
+DYNAMIC ANGER METER DISPLAY: {counter_display}
 
 CRITICAL INSTRUCTIONS:
 - You MUST start your response with: <t>{counter_display} [your thoughts]</t>
-- NEVER skip the anger counter display
+- NEVER skip the anger meter display
 - Use the EXACT format: <t>{counter_display} [YOUR ANGRY THOUGHTS IN ALL CAPS]</t>
 - Then follow with your ALL-CAPS vulgar response
-- The counter display is MANDATORY and MUST appear in every response
+- The anger meter shows your ACTUAL accumulated rage from the conversation
+- Higher points = more intense anger and vulgarity
+- Level {counter_level} rage intensity - respond accordingly
 """
-                )
-                enhanced_history = conversation_history + [counter_context]
-                return await self.angry_level3_enraged_agent.generate_response(enhanced_history)
-            else:
-                # Fallback with default counter
-                counter_context = ChatMessage(
-                    role="system",
-                    content=f"""
-MANDATORY ANGER COUNTER DISPLAY: 🤬 2/2
-
-CRITICAL INSTRUCTIONS:
-- You MUST start your response with: <t>🤬 2/2 [your thoughts]</t>
-- NEVER skip the anger counter display
-- Use the EXACT format: <t>🤬 2/2 [YOUR ANGRY THOUGHTS IN ALL CAPS]</t>
-- Then follow with your ALL-CAPS vulgar response
-- The counter display is MANDATORY and MUST appear in every response
-"""
-                )
-                enhanced_history = conversation_history + [counter_context]
-                return await self.angry_level3_enraged_agent.generate_response(enhanced_history)
+            )
+            # For enraged agent, add both universal instruction and specific counter context
+            enraged_enhanced_history = conversation_history + [universal_instruction, counter_context]
+            return await self.angry_level3_enraged_agent.generate_response(enraged_enhanced_history)
         else:  # Default to normal agent
-            return await self.normal_agent.generate_response(conversation_history)
+            return await self.normal_agent.generate_response(enhanced_history)
     
     def _generate_insights(self, sentiment_analysis: Dict[str, Any], orchestrator_thinking: Dict[str, Any], message: str) -> Dict[str, Any]:
         """Generate enhanced orchestrator insights"""
@@ -331,3 +366,11 @@ CRITICAL INSTRUCTIONS:
             return f"Using {agent} agent for {agent_desc}. Intensity {intensity:.1f} requires appropriate anger expression and venting."
         else:
             return f"Using {agent} agent for {agent_desc}. Emotion '{emotion}' requires measured, supportive response."
+    
+    def reset_state(self):
+        """Reset orchestrator to initial state"""
+        self.current_agent = "normal"
+        self.conversation_state = {}
+        self.emotional_history = []
+        self.anger_meter.reset_meter()
+        self.orchestrator_agent.reset_counter()
