@@ -98,6 +98,14 @@ class Orchestrator:
         orchestrator_insights = self._generate_insights(sentiment_analysis, orchestrator_thinking, message)
         
         # Step 4: Generate response using selected agent
+        # ENRAGED MAX: If in enraged and anger meter is max, walk away
+        if next_agent == "enraged":
+            anger_points = anger_meter_info.get("anger_points", 0)
+            max_points = anger_meter_info.get("max_points", 100)
+            if anger_points >= max_points:
+                self.ended = True
+                walkaway_msg = "<t>🔥 {}/{} pts (LVL 3) I'M DONE WITH THIS. WALKING AWAY.</t>BYE. I'M OUT. CONVERSATION OVER.".format(int(anger_points), max_points)
+                return walkaway_msg, next_agent, {"ended": True, "walkaway": True}
         response = await self._get_agent_response(next_agent, conversation_history, orchestrator_thinking)
         
         # BYE DETECTOR: If agent says goodbye, end conversation
