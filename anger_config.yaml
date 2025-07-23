@@ -13,7 +13,7 @@ thresholds:
 
 # Decay settings (how anger diminishes over time)
 decay:
-  idle_rate: 0.1         # Very slow decay to prevent easy escape from anger states
+  idle_rate: 0.3         # Moderate decay for natural anger reduction over time
   time_decay_enabled: false  # Enable time-based decay (not just message-based)
   time_rate: 0.5         # Points lost per minute (if time_decay_enabled)
   minimum_floor: 0       # Lowest anger can go
@@ -26,9 +26,9 @@ bonuses:
   direct_insults: 12          # Extra points for personal attacks/insults (reduced)
   
 penalties:
-  apology_reduction: -8       # Points removed when user apologizes (reduced from -15)
-  calm_language: -2           # Points removed for peaceful/calm messages (reduced from -5)
-  positive_emotion: -5        # Points removed when happiness/joy detected (reduced from -10)
+  apology_reduction: -15      # Points removed when user apologizes (increased for better de-escalation)
+  calm_language: -3           # Points removed for peaceful/calm messages 
+  positive_emotion: -8        # Points removed when happiness/joy detected
 
 # Meter behavior
 meter:
