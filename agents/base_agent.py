@@ -18,13 +18,16 @@ class ChatMessage:
 class BaseAgent(ABC):
     """Base class for all agents"""
     
-    def __init__(self, prompt_file: str):
+    def __init__(self, prompt_file: str, skip_personality: bool = False):
         # Load core personality and agent-specific prompt
         self.personality_prompt = load_prompt("sassi_personality.md")
         self.agent_prompt = load_prompt(prompt_file)
         
-        # Combine personality with agent-specific behavior
-        self.system_prompt = f"{self.personality_prompt}\n\n---\n\n{self.agent_prompt}"
+        # Combine personality with agent-specific behavior (unless skipped)
+        if skip_personality:
+            self.system_prompt = self.agent_prompt
+        else:
+            self.system_prompt = f"{self.personality_prompt}\n\n---\n\n{self.agent_prompt}"
         self.agent_type = self.__class__.__name__.lower().replace('agent', '')
     
     @abstractmethod
@@ -52,7 +55,7 @@ class BaseAgent(ABC):
                 groq_messages.append({"role": msg.role, "content": msg.content})
             
             completion = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama3-70b-8192",  # Upgraded to 70B for better emotional expression
                 messages=groq_messages,
                 max_tokens=max_tokens,
                 temperature=temperature,

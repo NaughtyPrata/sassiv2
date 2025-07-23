@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Tuple
+import asyncio
 from agents.normal_agent import NormalAgent
 from agents.sentiment_agent import SentimentAgent
 from agents.happy_level1_pleased_agent import HappyLevel1PleasedAgent
@@ -49,6 +50,88 @@ class Orchestrator:
         text_lower = text.lower()
         return any(phrase in text_lower for phrase in bye_phrases)
     
+    async def process_message_combined(self, message: str, conversation_history: List[ChatMessage]) -> Tuple[str, str, Dict[str, Any]]:
+        """
+        Process user message using combined sentiment+response approach (faster)
+        
+        Returns:
+            Tuple of (response, agent_type, analysis_data)
+        """
+        if self.ended:
+            return "[Conversation ended. Please reset to start a new chat.]", self.current_agent, {"ended": True}
+        
+        # For performance, use traditional sentiment analysis first, then get appropriate agent response
+        # This still reduces 3 API calls to 2 while maintaining accuracy
+        sentiment_analysis = await self.sentiment_agent.analyze_sentiment(message)
+        
+        # Process anger meter 
+        anger_emotions = ['anger', 'frustration', 'irritation', 'rage', 'annoyance']
+        emotion = sentiment_analysis.get('emotion', 'neutral')
+        
+        # Check if we need to route to angry agent based on anger meter
+        anger_agent, anger_meter_info = self.anger_meter.process_message(message, sentiment_analysis)
+        
+        # Create orchestrator thinking first
+        orchestrator_thinking = {
+            "current_agent": self.current_agent,
+            "next_agent": "normal",  # Will be updated below
+            "action": "combined_approach",
+            "thinking": f"Combined sentiment+response approach. Detected {emotion} with intensity {sentiment_analysis.get('intensity', 0):.1f}",
+            "emotion_detected": emotion,
+            "intensity_detected": sentiment_analysis.get('intensity', 0),
+            "anger_meter": anger_meter_info
+        }
+        
+        if anger_agent != "normal":
+            # Use angry agent
+            next_agent = anger_agent
+            orchestrator_thinking["next_agent"] = next_agent
+            response = await self._get_agent_response(anger_agent, conversation_history, orchestrator_thinking)
+        elif emotion in anger_emotions:
+            # If emotion is angry but anger meter says normal, still use appropriate level
+            if sentiment_analysis.get('intensity', 0) >= 0.7:
+                next_agent = "enraged"
+            elif sentiment_analysis.get('intensity', 0) >= 0.4:
+                next_agent = "agitated"  
+            else:
+                next_agent = "irritated"
+            orchestrator_thinking["next_agent"] = next_agent
+            response = await self._get_agent_response(next_agent, conversation_history, orchestrator_thinking)
+        else:
+            # Use normal agent
+            next_agent = "normal"
+            orchestrator_thinking["next_agent"] = next_agent
+            response = await self._get_agent_response(next_agent, conversation_history, orchestrator_thinking)
+        
+        # Generate insights
+        orchestrator_insights = self._generate_insights(sentiment_analysis, orchestrator_thinking, message)
+        
+        # Check for walkaway/bye conditions
+        if next_agent == "enraged":
+            anger_points = anger_meter_info.get("anger_points", 0)
+            max_points = anger_meter_info.get("max_points", 100)
+            if anger_points >= max_points:
+                self.ended = True
+                walkaway_msg = "<t>🔥 {}/{} pts (LVL 3) I'M DONE WITH THIS. WALKING AWAY.</t>BYE. I'M OUT. CONVERSATION OVER.".format(int(anger_points), max_points)
+                return walkaway_msg, next_agent, {"ended": True, "walkaway": True}
+        
+        if self._bye_detector(response):
+            self.ended = True
+            return response, next_agent, {"ended": True}
+        
+        # Update state
+        self._update_emotional_history(sentiment_analysis, next_agent)
+        self.current_agent = next_agent
+        
+        # Prepare analysis data
+        analysis_data = {
+            "sentiment_analysis": sentiment_analysis,
+            "orchestrator_decision": orchestrator_thinking,
+            "orchestrator_insights": orchestrator_insights
+        }
+        
+        return response, next_agent, analysis_data
+
     async def process_message(self, message: str, conversation_history: List[ChatMessage]) -> Tuple[str, str, Dict[str, Any]]:
         """
         Process user message and return response with agent type and sentiment analysis
@@ -60,44 +143,41 @@ class Orchestrator:
         if self.ended:
             return "[Conversation ended. Please reset to start a new chat.]", self.current_agent, {"ended": True}
         
-        # Step 1: Analyze sentiment
-        sentiment_analysis = await self.sentiment_agent.analyze_sentiment(message)
+        # Step 1: Run sentiment analysis and routing decision in parallel
+        sentiment_task = asyncio.create_task(self.sentiment_agent.analyze_sentiment(message))
         
-        # Step 2: Process anger meter for anger-related emotions
+        # We need sentiment for routing, so we'll do a quick pre-analysis or run them sequentially
+        # For now, let's do sentiment first, then parallel routing + response generation
+        sentiment_analysis = await sentiment_task
+        
+        # Step 2: ALWAYS process anger meter first (anger persists across messages)
         anger_emotions = ['anger', 'frustration', 'irritation', 'rage', 'annoyance']
         emotion = sentiment_analysis.get('emotion', 'neutral')
         
+        # ALWAYS use anger meter system - anger persists regardless of current message emotion
+        anger_agent, anger_meter_info = self.anger_meter.process_message(message, sentiment_analysis)
+        next_agent = anger_agent
+        
+        # Determine routing reason
         if emotion in anger_emotions:
-            # Use anger meter system for anger routing
-            anger_agent, anger_meter_info = self.anger_meter.process_message(message, sentiment_analysis)
-            next_agent = anger_agent
-            
-            # Create orchestrator thinking for anger meter decision
-            orchestrator_thinking = {
-                "current_agent": self.current_agent,
-                "next_agent": next_agent,
-                "action": "anger_meter_routing",
-                "thinking": f"Anger meter system activated. Current anger points: {anger_meter_info['anger_points']}, routing to {anger_agent} agent.",
-                "emotion_detected": emotion,
-                "intensity_detected": sentiment_analysis.get('intensity', 0),
-                "anger_meter": anger_meter_info
-            }
+            action = "anger_meter_routing_angry"
+            thinking = f"Angry message detected. Anger meter: {anger_meter_info['anger_points']} pts, routing to {anger_agent} agent."
         else:
-            # Use original orchestrator logic for non-anger emotions
-            routing_decision = await self.orchestrator_agent.make_routing_decision(
-                sentiment_analysis, self.current_agent, message
-            )
-            next_agent = routing_decision.get("next_agent", "normal")
-            orchestrator_thinking = routing_decision
-            
-            # Apply anger meter decay for non-anger messages
-            _, anger_meter_info = self.anger_meter.process_message(message, sentiment_analysis)
-            orchestrator_thinking["anger_meter"] = anger_meter_info
+            action = "anger_meter_routing_persistent" 
+            thinking = f"Non-angry message but anger persists. Anger meter: {anger_meter_info['anger_points']} pts, routing to {anger_agent} agent."
         
-        # Step 3: Generate enhanced orchestrator insights
-        orchestrator_insights = self._generate_insights(sentiment_analysis, orchestrator_thinking, message)
+        # Create orchestrator thinking for anger meter decision
+        orchestrator_thinking = {
+            "current_agent": self.current_agent,
+            "next_agent": next_agent,
+            "action": action,
+            "thinking": thinking,
+            "emotion_detected": emotion,
+            "intensity_detected": sentiment_analysis.get('intensity', 0),
+            "anger_meter": anger_meter_info
+        }
         
-        # Step 4: Generate response using selected agent
+        # Step 3: Generate response and insights in parallel
         # ENRAGED MAX: If in enraged and anger meter is max, walk away
         if next_agent == "enraged":
             anger_points = anger_meter_info.get("anger_points", 0)
@@ -106,7 +186,12 @@ class Orchestrator:
                 self.ended = True
                 walkaway_msg = "<t>🔥 {}/{} pts (LVL 3) I'M DONE WITH THIS. WALKING AWAY.</t>BYE. I'M OUT. CONVERSATION OVER.".format(int(anger_points), max_points)
                 return walkaway_msg, next_agent, {"ended": True, "walkaway": True}
-        response = await self._get_agent_response(next_agent, conversation_history, orchestrator_thinking)
+        
+        # Run response generation and insights generation in parallel
+        response_task = asyncio.create_task(self._get_agent_response(next_agent, conversation_history, orchestrator_thinking))
+        insights_task = asyncio.create_task(asyncio.to_thread(self._generate_insights, sentiment_analysis, orchestrator_thinking, message))
+        
+        response, orchestrator_insights = await asyncio.gather(response_task, insights_task)
         
         # BYE DETECTOR: If agent says goodbye, end conversation
         if self._bye_detector(response):
@@ -114,11 +199,16 @@ class Orchestrator:
             return response, next_agent, {"ended": True}
         
         # Step 5: Update emotional history and current agent
-        # ENFORCE: No direct agitated → normal transition
+        # ENFORCE: No direct high-anger → normal transitions
         if self.current_agent == "agitated" and next_agent == "normal":
             orchestrator_thinking["thinking"] += " [RULE ENFORCED: Cannot move directly from agitated to normal. Routing to irritated instead.]"
             next_agent = "irritated"
             orchestrator_thinking["next_agent"] = "irritated"
+            orchestrator_thinking["action"] = "de-escalate"
+        elif self.current_agent == "enraged" and next_agent == "normal":
+            orchestrator_thinking["thinking"] += " [RULE ENFORCED: Cannot move directly from enraged to normal. Routing to agitated instead.]"
+            next_agent = "agitated"
+            orchestrator_thinking["next_agent"] = "agitated"
             orchestrator_thinking["action"] = "de-escalate"
         self._update_emotional_history(sentiment_analysis, next_agent)
         self.current_agent = next_agent
@@ -192,6 +282,70 @@ class Orchestrator:
         
         return next_agent, orchestrator_thinking
     
+    async def _get_combined_sentiment_and_response(self, agent_name: str, message: str, conversation_history: List[ChatMessage], orchestrator_thinking: Dict[str, Any] = None) -> Tuple[str, Dict[str, Any]]:
+        """Get sentiment analysis and agent response in a single API call"""
+        # Get the agent to use
+        if agent_name == "pleased":
+            agent = self.happy_level1_pleased_agent
+        elif agent_name == "cheerful":
+            agent = self.happy_level2_cheerful_agent
+        elif agent_name == "ecstatic":
+            agent = self.happy_level3_ecstatic_agent
+        elif agent_name == "melancholy":
+            agent = self.sad_level1_melancholy_agent
+        elif agent_name == "sorrowful":
+            agent = self.sad_level2_sorrowful_agent
+        elif agent_name == "depressed":
+            agent = self.sad_level3_depressed_agent
+        elif agent_name == "irritated":
+            agent = self.angry_level1_irritated_agent
+        elif agent_name == "agitated":
+            agent = self.angry_level2_agitated_agent
+        elif agent_name == "enraged":
+            agent = self.angry_level3_enraged_agent
+        else:
+            agent = self.normal_agent
+        
+        # Create combined instruction
+        combined_instruction = ChatMessage(
+            role="system", 
+            content=f"""You will respond in two parts:
+1. SENTIMENT: Analyze the user's message for emotion, intensity (0.0-1.0), and emotional indicators
+2. RESPONSE: Generate your character response using <t></t> tags
+
+Format:
+SENTIMENT: {{"emotion": "emotion_name", "intensity": 0.0, "emotional_indicators": ["word1", "word2"]}}
+RESPONSE: <t>your thoughts</t>your response
+
+User message to analyze: "{message}"
+"""
+        )
+        
+        enhanced_history = conversation_history + [combined_instruction]
+        combined_result = await agent._call_groq(enhanced_history, max_tokens=2000)
+        
+        # Parse the combined result
+        try:
+            parts = combined_result.split("RESPONSE:", 1)
+            sentiment_part = parts[0].replace("SENTIMENT:", "").strip()
+            response_part = parts[1].strip() if len(parts) > 1 else combined_result
+            
+            # Parse sentiment JSON
+            import json
+            sentiment_analysis = json.loads(sentiment_part)
+            sentiment_analysis.setdefault("confidence", 1.0)
+            sentiment_analysis.setdefault("secondary_emotions", [])
+            sentiment_analysis.setdefault("thinking", f"Combined analysis of user message for {agent_name} agent")
+            
+            return response_part, sentiment_analysis
+        except:
+            # Fallback: treat entire result as response, use default sentiment
+            return combined_result, {
+                "emotion": "neutral", "intensity": 0.0, "confidence": 1.0,
+                "secondary_emotions": [], "emotional_indicators": [],
+                "thinking": "Fallback sentiment analysis"
+            }
+
     async def _get_agent_response(self, agent_name: str, conversation_history: List[ChatMessage], orchestrator_thinking: Dict[str, Any] = None) -> str:
         """Get response from the specified agent"""
         

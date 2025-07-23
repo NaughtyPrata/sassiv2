@@ -239,6 +239,15 @@ class AngerMeter:
         else:
             new_level = "normal"
         
+        # ENFORCE GRADUAL ESCALATION: No direct jumps from normal to enraged
+        current_rank = self._get_level_rank(self.current_level)
+        new_rank = self._get_level_rank(new_level)
+        
+        if current_rank == 0 and new_rank == 3:  # normal (0) -> enraged (3)
+            new_level = "agitated"  # Cap at agitated instead
+        elif current_rank == 1 and new_rank == 3:  # irritated (1) -> enraged (3)  
+            new_level = "agitated"  # Cap at agitated instead
+        
         # Check escalation cooldown
         if (new_level != self.current_level and 
             self._get_level_rank(new_level) > self._get_level_rank(self.current_level) and

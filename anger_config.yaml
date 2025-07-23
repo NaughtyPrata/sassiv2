@@ -5,25 +5,25 @@
 # Point calculation settings
 anger_multiplier: 15.0  # Base multiplier for sentiment intensity (0.7 intensity = 10.5 points)
 
-# Agent switching thresholds (anger points required)
+# Agent switching thresholds (anger points required) - GRADUAL ESCALATION ENFORCED
 thresholds:
-  irritated: 12    # Level 1: Mildly annoyed (lowered from 15)
-  agitated: 25     # Level 2: Clearly frustrated (lowered from 35)
-  enraged: 45      # Level 3: Full rage mode (lowered from 100)
+  irritated: 20    # Level 1: Mildly annoyed 
+  agitated: 45     # Level 2: Clearly frustrated 
+  enraged: 80      # Level 3: Full rage mode - high threshold to prevent direct jumps
 
 # Decay settings (how anger diminishes over time)
 decay:
-  idle_rate: 0.5         # Points lost per message when no anger detected (reduced from 2)
+  idle_rate: 0.1         # Very slow decay to prevent easy escape from anger states
   time_decay_enabled: false  # Enable time-based decay (not just message-based)
   time_rate: 0.5         # Points lost per minute (if time_decay_enabled)
   minimum_floor: 0       # Lowest anger can go
 
-# Contextual bonuses and penalties
+# Contextual bonuses and penalties - REDUCED to prevent single-message level jumps
 bonuses:
   consecutive_anger: 5        # Extra points for back-to-back angry messages
   rapid_escalation: 3         # Bonus when anger builds quickly
-  vulgar_language: 15         # Extra points for swearing/offensive language
-  direct_insults: 25          # Extra points for personal attacks/insults
+  vulgar_language: 8          # Extra points for swearing/offensive language (reduced)
+  direct_insults: 12          # Extra points for personal attacks/insults (reduced)
   
 penalties:
   apology_reduction: -8       # Points removed when user apologizes (reduced from -15)

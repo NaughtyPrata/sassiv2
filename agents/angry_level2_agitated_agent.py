@@ -3,7 +3,7 @@ from typing import List
 
 class AngryLevel2AgitatedAgent(BaseAgent):
     def __init__(self):
-        super().__init__("angry-2-agitated.md")
+        super().__init__("angry-2-agitated.md", skip_personality=True)
     
     async def generate_response(self, messages: List[ChatMessage]) -> str:
         """Generate agitated response based on conversation history"""

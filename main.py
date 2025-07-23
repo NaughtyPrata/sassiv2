@@ -67,6 +67,66 @@ async def shutdown_event():
 async def root():
     return {"message": "Emotional Chatbot API is running!", "version": "2.0.0", "phase": "2 - Sentiment Analysis"}
 
+@app.post("/chat-fast", response_model=ChatResponse)
+async def chat_fast(request: ChatRequest):
+    """Fast chat endpoint using combined sentiment+response approach"""
+    try:
+        # Generate conversation ID if not provided
+        conversation_id = request.conversation_id or str(uuid.uuid4())
+        
+        # Get or create conversation history
+        if conversation_id not in conversations:
+            conversations[conversation_id] = []
+            # Reset orchestrator state for new conversations
+            print(f"🆕 New conversation {conversation_id[:8]}... - resetting orchestrator state")
+            orchestrator.reset_state()
+        
+        conversation_history = conversations[conversation_id]
+        
+        # Add user message to history
+        user_message = ChatMessage(
+            role="user", 
+            content=request.message,
+            timestamp=datetime.now()
+        )
+        conversation_history.append(user_message)
+        
+        # Convert to agent format for processing
+        agent_history = [
+            AgentChatMessage(msg.role, msg.content, msg.timestamp) 
+            for msg in conversation_history
+        ]
+        
+        # Process message through orchestrator using PARALLEL approach (optimized)
+        response_content, agent_type, analysis_data = await orchestrator.process_message(
+            request.message, 
+            agent_history
+        )
+        
+        # Add assistant response to history
+        assistant_message = ChatMessage(
+            role="assistant",
+            content=response_content,
+            timestamp=datetime.now()
+        )
+        conversation_history.append(assistant_message)
+        
+        # Update conversation storage
+        conversations[conversation_id] = conversation_history
+        
+        return ChatResponse(
+            response=response_content,
+            conversation_id=conversation_id,
+            agent_type=agent_type,
+            timestamp=datetime.now(),
+            sentiment_analysis=analysis_data.get("sentiment_analysis"),
+            orchestrator_decision=analysis_data.get("orchestrator_decision"),
+            orchestrator_insights=analysis_data.get("orchestrator_insights")
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Main chat endpoint"""
