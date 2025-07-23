@@ -285,6 +285,9 @@ CRITICAL INSTRUCTIONS:
         # Create trigger explanation
         trigger_explanation = self._explain_triggers(triggers, emotion, intensity, message)
         
+        # Extract anger meter info if available
+        anger_meter_data = orchestrator_thinking.get('anger_meter', {})
+        
         return {
             "current_state": f"{current_agent} → {next_agent}",
             "emotional_intensity": f"{intensity:.1f}/1.0 ({self._intensity_description(intensity)})",
@@ -292,7 +295,11 @@ CRITICAL INSTRUCTIONS:
             "conversation_trajectory": trajectory,
             "detected_triggers": triggers,
             "state_transition": state_transition,
-            "orchestrator_suggestion": suggestion
+            "orchestrator_suggestion": suggestion,
+            "anger_points": anger_meter_data.get("anger_points", 0),
+            "anger_level": anger_meter_data.get("anger_level", "normal"),
+            "anger_thresholds": anger_meter_data.get("thresholds", {}),
+            "anger_change_reasons": anger_meter_data.get("change_reasons", [])
         }
     
     def _update_emotional_history(self, sentiment_analysis: Dict[str, Any], agent: str):
