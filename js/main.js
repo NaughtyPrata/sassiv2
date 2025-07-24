@@ -103,7 +103,7 @@ function addBotMessage(content, agentType, timestamp) {
   if (!html) html = escapeHtml(content);
   const div = document.createElement('div');
   div.innerHTML = `
-    <div class="text-xs text-gray-400 mb-1">Sassi (${agentType || 'normal'}) • ${timestamp ? new Date(timestamp).toLocaleTimeString() : 'now'}</div>
+    <div class="text-xs text-gray-400 mb-1">ESE (${agentType || 'normal'}) • ${timestamp ? new Date(timestamp).toLocaleTimeString() : 'now'}</div>
     <div class="inline-block bg-gray-100 rounded-xl px-4 py-3 shadow-sm">${html}</div>
   `;
   chatMessages.appendChild(div);
