@@ -83,14 +83,10 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
-        <div class="absolute inset-0 opacity-20">
-            <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-primary rounded-full blur-3xl animate-pulse"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-purple rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+        <canvas id="network-canvas"></canvas>
         
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center" style="z-index: 10;">
             <div class="space-y-8 parallax-element" data-speed="0.5">
                 <h1 class="text-5xl md:text-7xl font-black tracking-tight">
                     <span class="text-white">Emotion State</span>
@@ -672,6 +668,9 @@
         });
     </script>
 
+    <!-- Network Background -->
+    <script src="js/network-bg.js"></script>
+    
     <!-- Custom JavaScript -->
     <script src="js/main.js"></script>
 </body>
